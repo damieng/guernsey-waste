@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Simple Trash Collection</title>
+    <style type="text/css">
+        body, ol, li { margin: 0; padding: 0; }
+    </style>
+  </head>
+  <body>
+    <ol id="output">
+    </ol>
+    <script>
+        var address = window.location.search.substr(1)
+        var request = window.fetch(`https://guernsey.isl-fusion.com/api/address/${address}`)
+        var out = document.getElementById('output')
+
+        request
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                out.innerHtml = ''
+
+                for(const servicedate of Object.values(data.servicedates)) {
+                    const dateLi = document.createElement('li')
+                    dateLi.innerText = new Date(servicedate.date).toLocaleDateString()
+                    out.appendChild(dateLi)
+                    const servicesUl = document.createElement('ul')
+                    for(const service of Object.values(servicedate.services)) {
+                        const serviceLi = document.createElement('li')
+                        serviceLi.innerText = data.services[service].name
+                        servicesUl.appendChild(serviceLi)
+                    }
+                    out.appendChild(servicesUl)
+                }
+            });
+    </script>
+  </body>
+</html>
