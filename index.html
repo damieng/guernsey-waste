@@ -11,8 +11,7 @@
     </style>
   </head>
   <body>
-    <ol id="output">
-    </ol>
+    <ol id="output" />
     <script>
         const address = window.location.search.substr(1)
         const out = document.getElementById('output')
@@ -24,7 +23,7 @@
             .then(data => {
                 out.innerHtml = ''
 
-                for(const servicedate of Object.values(data.servicedates).slice(0,1)) {
+                for(const servicedate of Object.values(data.servicedates).slice(0, 1)) {
                     const dateLi = document.createElement('li')
                     dateLi.innerText = new Date(servicedate.date).toLocaleDateString()
                     out.appendChild(dateLi)
