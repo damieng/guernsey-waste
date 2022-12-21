@@ -14,13 +14,12 @@
     </ol>
     <script>
         var address = window.location.search.substr(1)
-        var request = window.fetch(`https://guernsey.isl-fusion.com/api/address/${address}`)
+        var request = window.fetch(`https://app.damieng-work.workers.dev/${address}`)
         var out = document.getElementById('output')
 
         request
             .then(response => response.json())
             .then(data => {
-                console.log(data)
                 out.innerHtml = ''
 
                 for(const servicedate of Object.values(data.servicedates)) {
