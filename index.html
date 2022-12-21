@@ -7,29 +7,35 @@
     <title>Simple Trash Collection</title>
     <style type="text/css">
         body, ol, li { margin: 0; padding: 0; }
+        ul, li { display: inline }
     </style>
   </head>
   <body>
     <ol id="output">
     </ol>
     <script>
-        var address = window.location.search.substr(1)
-        var request = window.fetch(`https://app.damieng-work.workers.dev/${address}`)
-        var out = document.getElementById('output')
+        const address = window.location.search.substr(1)
+        const request = window.fetch(`https://app.damieng-work.workers.dev/${address}`)
+        const out = document.getElementById('output')
+        const imgBase = 'https://guernsey.isl-fusion.com'
 
         request
             .then(response => response.json())
             .then(data => {
                 out.innerHtml = ''
 
-                for(const servicedate of Object.values(data.servicedates)) {
+                for(const servicedate of Object.values(data.servicedates).slice(0,1)) {
                     const dateLi = document.createElement('li')
                     dateLi.innerText = new Date(servicedate.date).toLocaleDateString()
                     out.appendChild(dateLi)
                     const servicesUl = document.createElement('ul')
-                    for(const service of Object.values(servicedate.services)) {
+                    for(const serviceId of Object.values(servicedate.services)) {
                         const serviceLi = document.createElement('li')
-                        serviceLi.innerText = data.services[service].name
+                        const service = data.services[serviceId]
+                        const serviceImg = document.createElement('img')
+                        serviceImg.src = `${imgBase}${service.imageurl}`
+                        serviceImg.title = service.name
+                        serviceLi.appendChild(serviceImg)
                         servicesUl.appendChild(serviceLi)
                     }
                     out.appendChild(servicesUl)
