@@ -6,9 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Simple Trash Collection</title>
     <style type="text/css">
-        body { font-family: sans-serif }
-        body, ol, li { margin: 0; padding: 0 }
+        body { background: rgb(28, 28, 28); color: #fff; font-family: sans-serif }
+        body, ol, li { margin: 0; padding: 0; }
         ul, li { display: inline }
+        li { display: flex; align-items: center; }
     </style>
   </head>
   <body>
@@ -26,20 +27,20 @@
                 out.innerHtml = ''
 
                 for(const servicedate of Object.values(data.servicedates).slice(0, 1)) {
-                    const dateLi = document.createElement('li')
-                    dateLi.innerText = new Date(servicedate.date).toLocaleDateString(undefined, dateFormat)
-                    out.appendChild(dateLi)
-                    const servicesUl = document.createElement('ul')
+                    const li = document.createElement('li')
+                    const dateDiv = document.createElement('div')
+                    dateDiv.innerText = new Date(servicedate.date).toLocaleDateString(undefined, dateFormat)
+                    li.appendChild(dateDiv)
+                    const servicesDiv = document.createElement('div')
                     for(const serviceId of Object.values(servicedate.services)) {
-                        const serviceLi = document.createElement('li')
                         const service = data.services[serviceId]
                         const serviceImg = document.createElement('img')
                         serviceImg.src = `${imgBase}${service.imageurl}`
                         serviceImg.title = service.name
-                        serviceLi.appendChild(serviceImg)
-                        servicesUl.appendChild(serviceLi)
+                        servicesDiv.appendChild(serviceImg)
                     }
-                    out.appendChild(servicesUl)
+                    li.appendChild(servicesDiv)
+                    out.appendChild(li)
                 }
             });
     </script>
