@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+  <head>
+    <title>Road information map</title>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/3.28/dijit/themes/tundra/tundra.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/3.28/esri/css/esri.css"
+    />
+
+    <link
+      href="https://roadworks.gov.gg/GSW/css/ToolBar.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://roadworks.gov.gg/GSW/css/site.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://roadworks.gov.gg/GSW/css/Public.css?ver=20211210"
+    />
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/javascript/promise-polyfill.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/javascript/fetch.umd.js"
+    ></script>
+  </head>
+  <body
+    class="tundra"
+    style="font-family: Verdana"
+  >
+    <script
+      type="text/javascript"
+      src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://js.arcgis.com/3.28/"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/config.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/javascript/Tools.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/javascript/GIS.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/javascript/Modal.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/javascript/calendar.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/javascript/RoadSearch.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://roadworks.gov.gg/GSW/javascript/Roadworks.js?ver=20220413"
+    ></script>
+    <script type="text/javascript">
+      require(["dojo/on", "dojo/ready"], function (on, ready) {
+        on.once(document, "PageInit", function (e) {
+          RoadworksPageInit()
+        })
+
+        ready(function () {
+          init()
+          if (typeof SummaryTrafficReportURL !== "undefined" && SummaryTrafficReportURL) {
+            document.getElementById("SummaryTrafficReportLink").setAttribute("href", SummaryTrafficReportURL)
+          }
+        })
+      })
+
+      UseOverView = true
+      QuestionMode = 1
+      ShowSlider = true
+
+      function ChangeTab() {
+        DoChangeTab($("input[name=activeTab]:checked").val())
+      }
+
+      $(document).ready(function () {
+        TrafficAlertURL = "https://roadworks.gov.gg/GSW/" + TrafficAlertURL
+
+        $("#RoadSearchText").focus(function () {
+          $(this).val("")
+        })
+        $("#RoadSearchText").blur(function () {
+          var query = $(this).val()
+          if (query == "") {
+            $(this).val("Search by road name or postcode")
+          }
+        })
+
+        $("#activeTab").prop("disabled", false)
+        $("#activeTab").val("Roadworks")
+        ;(function (i, s, o, g, r, a, m) {
+          i["GoogleAnalyticsObject"] = r
+          ;(i[r] =
+            i[r] ||
+            function () {
+              ;(i[r].q = i[r].q || []).push(arguments)
+            }),
+            (i[r].l = 1 * new Date())
+          ;(a = s.createElement(o)), (m = s.getElementsByTagName(o)[0])
+          a.async = 1
+          a.src = g
+          m.parentNode.insertBefore(a, m)
+        })(window, document, "script", "//www.google-analytics.com/analytics.js", "ga")
+
+        ga("create", "UA-41298362-1", "roadworks.gov.je")
+        ga("send", "pageview")
+      })
+    </script>
+    <style>
+      .sideBar {
+        top: unset !important;
+        bottom: unset !important;
+      }
+    </style>
+    <div id="FullPageDiv">
+      <div
+        id="GrayBar"
+        style="position: absolute; top: 88px; left: 0px; width: 100%; height: 23px"
+      >
+        <div
+          id="MenuLink"
+          style="position: absolute; top: -2px; left: 5px"
+        ></div>
+      </div>
+      <!-- Left bar -->
+      <div
+        id="LeftBar"
+        class="sideBar leftBar"
+      >
+        <div id="OverViewContainer">
+          <div id="OverView"></div>
+        </div>
+        <div id="layerSelect">
+          <label class="rwTab"
+            ><input
+              type="radio"
+              name="activeTab"
+              value="Roadworks"
+              onchange="ChangeTab();"
+              checked="checked"
+            /><span class="rwTab"><span>Road works</span></span></label
+          >
+          <label class="rwTab"
+            ><input
+              type="radio"
+              name="activeTab"
+              value="Resurfacing"
+              onchange="ChangeTab();"
+            /><span class="rwTab"><span>Road resurfacing &amp; embargoes</span></span></label
+          >
+          <label class="rwTab"
+            ><input
+              type="radio"
+              name="activeTab"
+              value="Administration"
+              onchange="ChangeTab();"
+            /><span class="rwTab"><span>Road ownership</span></span></label
+          >
+        </div>
+        <div class="tabPane tabRoadworks">
+          <div class="sideHeader">Search</div>
+          <div>
+            <div id="Dates">
+              <select
+                id="RWDateRangeSelection"
+                onchange="ChangeRWDate();"
+              >
+                <option style="color: red">Now</option>
+                <option selected="selected">Today</option>
+                <option>Tomorrow</option>
+                <option>This week</option>
+                <option>Next week</option>
+                <option>This month</option>
+                <option>Next month</option>
+              </select>
+              <input
+                type="text"
+                name="calDate"
+                id="calDate"
+                size="11"
+                onclick="SelectDate('CalendarDiv', 'calDate');"
+              />
+              <span>to</span>
+              <input
+                type="text"
+                name="calDate2"
+                id="calDate2"
+                size="11"
+                onclick="SelectDate('CalendarDiv', 'calDate2');"
+              />
+            </div>
+            <div class="rwButtons">
+              <input
+                type="button"
+                value="Update"
+                onclick="UpdateButtonClick();"
+              />
+
+              <input
+                type="button"
+                class="alternateHilight"
+                value="Reset search"
+                onclick="ResetPage();"
+              />
+
+              <input
+                type="button"
+                value="Help"
+                onclick="window.open('help.htm');"
+              />
+            </div>
+          </div>
+          <div style="position: absolute; left: 0px; top: 66px">
+            <!-- can't remove this button or no map draws (!? go figure) so hide it insted -->
+            <div
+              dojotype="dijit.form.Button"
+              id="Ident"
+              iconclass="IButtonIcon"
+              onclick="SetTool('Ident');"
+              style="visibility: hidden"
+            ></div>
+            <img
+              id="loadingImg"
+              alt=""
+              src="Images/loading.gif"
+              style="position: absolute; left: 250px; top: 0px"
+            />
+          </div>
+        </div>
+        <div class="tabPane tabResurfacing hidden">
+          <div class="rwButtons">
+            <input
+              type="button"
+              class="alternateHilight"
+              value="Reset search"
+              onclick="ResetPage();"
+            />
+
+            <input
+              type="button"
+              value="Help"
+              onclick="window.open('embargoeshelp.htm');"
+            />
+          </div>
+        </div>
+        <div class="tabPane tabAdministration hidden">
+          <div class="rwButtons">
+            <input
+              type="button"
+              class="alternateHilight"
+              value="Reset search"
+              onclick="ResetPage();"
+            />
+
+            <input
+              type="button"
+              value="Help"
+              onclick="window.open('embargoeshelp.htm');"
+            />
+          </div>
+        </div>
+      </div>
+      <!-- End Left bar -->
+      <!-- Right bar -->
+      <div
+        id="RightBar"
+        class="sideBar rightBar"
+      >
+        <div class="tabPane tabRoadworks">
+          <div class="sideHeader trafficSummaryReport">Traffic Info</div>
+          <div class="sideContents">
+            <div class="trafficSummaryReport">
+              <img
+                alt=""
+                src="Images/traffic.png"
+              />
+              <span id="SummaryTrafficReportText"
+                ><a
+                  id="SummaryTrafficReportLink"
+                  alt=""
+                  href="/trafficreport/"
+                  target="_blank"
+                  >Summary traffic report</a
+                ></span
+              >
+              <hr />
+            </div>
+            <div class="roadworksLegend">
+              <div>
+                <span>Road closure</span>
+                <div class="largeSymbol symbology-roadClosed"></div>
+              </div>
+              <div>
+                <span class="diversionText">Diversion</span>
+                <div class="largeSymbol symbology-diversion"></div>
+              </div>
+              <div class="diversionCars">
+                <span>Diversion (Cars)</span>
+                <div class="largeSymbol symbology-diversionCars"></div>
+              </div>
+              <div>
+                <span class="oneWayText">One way</span>
+                <div class="largeSymbol symbology-oneWay"></div>
+              </div>
+              <div class="oneWayCars">
+                <span>One way (Cars)</span>
+                <div class="largeSymbol symbology-oneWayCars"></div>
+              </div>
+              <div>
+                <span>Single line traffic</span>
+                <div class="largeSymbol symbology-singleLane"></div>
+              </div>
+              <div>
+                <span>Other</span>
+                <div class="largeSymbol symbology-other"></div>
+              </div>
+
+              <div class="roadClosedLegend">
+                <img
+                  alt=""
+                  src="Images/NoEntry.gif"
+                />
+                <div class="roadClosedText">Road closed from this point</div>
+              </div>
+
+              <div class="trafficRestrictionLegend">
+                <img
+                  alt=""
+                  src="Images/Working.gif"
+                />
+                <div class="trafficRestrictionText"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabPane tabResurfacing hidden">
+          <div class="sideHeader">Embargoes</div>
+          <div class="sideContents">
+            <div class="roadworksLegend">
+              <div>
+                <div class="largeSymbol symbology-embargoIntUnderEmbargo"></div>
+                <span>Under Embargo*</span>
+              </div>
+            </div>
+          </div>
+          <div class="sideHeader">Planned Resurfacing</div>
+          <div class="sideContents">
+            <div class="roadworksLegend">
+              <div>
+                <span class="embargoIntUnder6Months">Within 6 months</span>
+                <div class="largeSymbol symbology-embargoIntUnder6Months"></div>
+              </div>
+              <div>
+                <span>6 to 12 months</span>
+                <div class="largeSymbol symbology-embargoInt6to12Months"></div>
+              </div>
+              <div>
+                <span>12 to 24 months</span>
+                <div class="largeSymbol symbology-embargoInt12to24Months"></div>
+              </div>
+              <div>
+                <span>Over 24 months</span>
+                <div class="largeSymbol symbology-embargoIntOver24Months"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sideHeader">Last Resurfaced</div>
+          <div class="sideContents">
+            <div class="roadworksLegend">
+              <div>
+                <span>0 to 5 years ago</span>
+                <div class="largeSymbol symbology-embargoInt0to5Years"></div>
+              </div>
+              <div>
+                <span>5 to 10 years ago</span>
+                <div class="largeSymbol symbology-embargoInt6to10Years"></div>
+              </div>
+              <div>
+                <span>>10 years ago</span>
+                <div class="largeSymbol symbology-embargoIntOver10Years"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sideContents">
+            <span class="rwEmbargoNote"
+              >* Excavations will normally be prohibited unless for exceptional reasons approved by the Highway Authority</span
+            >
+          </div>
+        </div>
+
+        <div class="tabPane tabAdministration hidden">
+          <div class="sideHeader">Road ownership</div>
+          <div class="sideContents">
+            <div class="roadworksLegend">
+              <div>
+                <span class="rwHighwayAuthority"></span>
+                <div class="largeSymbol symbology-roadGHA"></div>
+              </div>
+              <div>
+                <span class="rwHighwayParish"></span>
+                <div class="largeSymbol symbology-roadParish"></div>
+              </div>
+              <div>
+                <span class="rwHighwayPrivate"></span>
+                <div class="largeSymbol symbology-roadPrivate"></div>
+              </div>
+              <div class="rwHighwayShowOther">
+                <span>Other</span>
+                <div class="largeSymbol symbology-roadOther"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End Right bar -->
+      <!--<div  style="border: 3px solid white; position: absolute; left: 160px; top: 120px; width: 50px; height: 230px; background-color: #00FFFF; z-index:1;">
+    </div>-->
+      <div
+        id="MapDiv"
+        dojotype="dijit.layout.ContentPane"
+        style="border: 3px solid white; position: absolute; left: 140px; right: 140px; top: 0px; bottom: 165px"
+      >
+        <div class="copyrightFooter">&copy;</div>
+      </div>
+      <div id="Landing">
+        <div
+          id="InnerLanding"
+          style="
+            padding: 5px 20px 5px 20px;
+            margin: auto 140px;
+            border: none;
+            background-color: #f3f3f3;
+            font-size: 12px;
+            text-align: left;
+          "
+        >
+          <div class="tabPane tabRoadworks">
+            <div class="sectionTitle">How to use the map</div>
+            <hr />
+            <ul id="landingRoadworksHelp">
+              <li>Select a time period from the drop down or set the dates you want, then press 'Update'.</li>
+              <li>To find out about an activity on the map click on the highlighted road.</li>
+              <li>
+                If you are interested in a particular road go to the 'Search' field and enter its name, a word or the post code,
+                press 'Go' and select from the result list.
+              </li>
+              <li>Click 'Reset' to restart your search.</li>
+            </ul>
+          </div>
+          <div class="tabPane tabResurfacing hidden">
+            <div class="sectionTitle">How to use the map</div>
+            <hr />
+            <ul id="landingResurfacingHelp">
+              <li>
+                If you want to find information about a particular road go to the 'Search' field and enter its name, a word or
+                postcode, press 'Go' and select from the result list.
+              </li>
+              <li>
+                To obtain the information about the road (i.e who administers it, when will it next be resurfaced or if it's under a
+                utility embargo) click on it.
+              </li>
+              <li>Click 'Reset' to restart your search.</li>
+            </ul>
+          </div>
+          <div class="tabPane tabAdministration hidden">
+            <div class="sectionTitle">How to use the map</div>
+            <hr />
+            <ul id="landingAdministrationHelp">
+              <li>
+                If you want to find information about a particular road go to the 'Search' field and enter its name, a word or
+                postcode, press 'Go' and select from the result list.
+              </li>
+              <li>To obtain the information about the road (i.e who administers it) click on it.</li>
+              <li>Click 'Reset' to restart your search.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="GridDiv"
+        style="
+          position: absolute;
+          left: 0px;
+          right: 0px;
+          height: 160px;
+          bottom: 0px;
+          overflow: auto;
+          visibility: hidden;
+          border: none;
+        "
+      ></div>
+      <div id="IdentGrid"></div>
+      <div id="CalendarDiv">
+        <div id="calendar"></div>
+      </div>
+    </div>
+    <div id="preload-01"></div>
+    <div id="preload-02"></div>
+    <div id="preload-03"></div>
+  </body>
+</html>
